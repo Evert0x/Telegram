@@ -49,9 +49,11 @@ import java.util.ArrayList;
 public class ChangeBioActivity extends BaseFragment {
 
     private EditTextBoldCursor firstNameField;
+    private EditTextBoldCursor privateKeyField;
     private View doneButton;
     private TextView checkTextView;
     private TextView helpTextView;
+    private TextView helpTextViewPrivateKey;
 
     private final static int done_button = 1;
 
@@ -94,7 +96,7 @@ public class ChangeBioActivity extends BaseFragment {
         firstNameField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         firstNameField.setImeOptions(EditorInfo.IME_ACTION_DONE);
         InputFilter[] inputFilters = new InputFilter[1];
-        inputFilters[0] = new InputFilter.LengthFilter(70) {
+        inputFilters[0] = new InputFilter.LengthFilter(42) {
             @Override
             public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
                 if (source != null && TextUtils.indexOf(source, '\n') != -1) {
@@ -114,7 +116,7 @@ public class ChangeBioActivity extends BaseFragment {
         };
         firstNameField.setFilters(inputFilters);
         firstNameField.setMinHeight(AndroidUtilities.dp(36));
-        firstNameField.setHint(LocaleController.getString("UserBio", R.string.UserBio));
+        firstNameField.setHint("Public key (0x..)");
         firstNameField.setCursorColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
         firstNameField.setCursorSize(AndroidUtilities.dp(20));
         firstNameField.setCursorWidth(1.5f);
@@ -138,7 +140,7 @@ public class ChangeBioActivity extends BaseFragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                checkTextView.setText(String.format("%d", (70 - firstNameField.length())));
+                checkTextView.setText(String.format("%d", (42 - firstNameField.length())));
             }
         });
 
@@ -146,7 +148,7 @@ public class ChangeBioActivity extends BaseFragment {
 
         checkTextView = new TextView(context);
         checkTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
-        checkTextView.setText(String.format("%d", 70));
+        checkTextView.setText(String.format("%d", 42));
         checkTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText4));
         fieldContainer.addView(checkTextView, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, LocaleController.isRTL ? Gravity.LEFT : Gravity.RIGHT, 0, 4, 4, 0));
 
@@ -154,8 +156,60 @@ public class ChangeBioActivity extends BaseFragment {
         helpTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         helpTextView.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText8));
         helpTextView.setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
-        helpTextView.setText(AndroidUtilities.replaceTags(LocaleController.getString("UserBioInfo", R.string.UserBioInfo)));
+        helpTextView.setText(AndroidUtilities.replaceTags("Put your public key in this textfield, users will be able to see this and transfer tokens."));
         linearLayout.addView(helpTextView, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 24, 10, 24, 0));
+
+        privateKeyField = new EditTextBoldCursor(context);
+        privateKeyField.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
+        privateKeyField.setHintTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteHintText));
+        privateKeyField.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        privateKeyField.setBackgroundDrawable(Theme.createEditTextDrawable(context, false));
+        privateKeyField.setMaxLines(4);
+        privateKeyField.setPadding(AndroidUtilities.dp(LocaleController.isRTL ? 24 : 0), 0, AndroidUtilities.dp(LocaleController.isRTL ? 0 : 24), AndroidUtilities.dp(6));
+        privateKeyField.setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
+        privateKeyField.setImeOptions(EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+        privateKeyField.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        privateKeyField.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        privateKeyField.setMinHeight(AndroidUtilities.dp(36));
+        privateKeyField.setHint("Private key (64 characters)");
+        privateKeyField.setCursorColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
+        privateKeyField.setCursorSize(AndroidUtilities.dp(20));
+        privateKeyField.setCursorWidth(1.5f);
+        InputFilter[] ip = new InputFilter[1];
+        ip[0] = new InputFilter.LengthFilter(64){
+            @Override
+            public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+                if (source != null && TextUtils.indexOf(source, '\n') != -1) {
+                    doneButton.performClick();
+                    return "";
+                }
+                CharSequence result = super.filter(source, start, end, dest, dstart, dend);
+                if (result != null && source != null && result.length() != source.length()) {
+                    Vibrator v = (Vibrator) getParentActivity().getSystemService(Context.VIBRATOR_SERVICE);
+                    if (v != null) {
+                        v.vibrate(200);
+                    }
+                }
+                return result;
+            }
+        };
+        privateKeyField.setFilters(ip);
+        privateKeyField.setOnEditorActionListener((textView, i, keyEvent) -> {
+            if (i == EditorInfo.IME_ACTION_DONE && doneButton != null) {
+                doneButton.performClick();
+                return true;
+            }
+            return false;
+        });
+        linearLayout.addView(privateKeyField, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 24, 10, 24, 0));
+        //fieldContainer.addView(firstNameField, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 0, 0, 4, 0));
+
+        helpTextViewPrivateKey = new TextView(context);
+        helpTextViewPrivateKey.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+        helpTextViewPrivateKey.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText8));
+        helpTextViewPrivateKey.setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
+        helpTextViewPrivateKey.setText(AndroidUtilities.replaceTags("WARNING: put your private key here. This will be stored on the device."));
+        linearLayout.addView(helpTextViewPrivateKey, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 24, 10, 24, 0));
 
         TLRPC.UserFull userFull = MessagesController.getInstance(currentAccount).getUserFull(UserConfig.getInstance(currentAccount).getClientUserId());
         if (userFull != null && userFull.about != null) {

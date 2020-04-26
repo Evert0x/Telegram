@@ -2249,10 +2249,10 @@ public class SettingsActivity extends BaseFragment implements NotificationCenter
                         String value;
                         if (userInfo == null || !TextUtils.isEmpty(userInfo.about)) {
                             value = userInfo == null ? LocaleController.getString("Loading", R.string.Loading) : userInfo.about;
-                            textCell.setTextWithEmojiAndValue(value, LocaleController.getString("UserBio", R.string.UserBio), false);
+                            textCell.setTextWithEmojiAndValue(value, "Add your Ethereum keys", false);
                             currentBio = userInfo != null ? userInfo.about : null;
                         } else {
-                            textCell.setTextAndValue(LocaleController.getString("UserBio", R.string.UserBio), LocaleController.getString("UserBioDetail", R.string.UserBioDetail), false);
+                            textCell.setTextAndValue("Public key", "Add your Ethereum keys", false);
                             currentBio = null;
                         }
                     }
