@@ -1,8 +1,7 @@
 /*
  * This is the source code of Telegram for Android v. 5.x.x.
  * It is licensed under GNU GPL v. 2 or later.
- * You should have received a copy of the license in this archive (see LICENSE).
- *
+ * It is licensed under GNU GPL v. 2 or later.
  * Copyright Nikolai Kudashov, 2013-2018.
  */
 
@@ -13,9 +12,9 @@ import android.content.SharedPreferences;
 
 public class BuildVars {
 
-    public static boolean DEBUG_VERSION = false;
-    public static boolean DEBUG_PRIVATE_VERSION = false;
-    public static boolean LOGS_ENABLED = false;
+    public static boolean DEBUG_VERSION = true;
+    public static boolean DEBUG_PRIVATE_VERSION = true;
+    public static boolean LOGS_ENABLED = true   ;
     public static boolean USE_CLOUD_STRINGS = true;
     public static boolean CHECK_UPDATES = true;
     public static boolean TON_WALLET_STANDALONE = false;
