@@ -5,4 +5,4 @@ obj/
 *.iml
 local.properties
 .cxx
-TMessagesProj/google-services.json
+*.json
