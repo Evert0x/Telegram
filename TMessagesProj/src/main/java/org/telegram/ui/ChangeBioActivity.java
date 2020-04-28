@@ -211,7 +211,15 @@ public class ChangeBioActivity extends BaseFragment {
         helpTextViewPrivateKey.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         helpTextViewPrivateKey.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteGrayText8));
         helpTextViewPrivateKey.setGravity(LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT);
-        helpTextViewPrivateKey.setText(AndroidUtilities.replaceTags("WARNING: put your private key here. This will be stored on the device."));
+        SharedPreferences userDetails = context.getSharedPreferences("userdetails", Context.MODE_PRIVATE);
+        final String privateKey = userDetails.getString("pkey5", "");
+        String helpText = "Private key is not set.";
+        if(!privateKey.isEmpty()){
+            int length = Math.min(privateKey.length(), 5);
+            helpText = String.format("Private key set, starts with `%s`, length: %s", privateKey.substring(0 , length), privateKey.length());
+        }
+
+        helpTextViewPrivateKey.setText(AndroidUtilities.replaceTags(String.format("%s \nWARNING: put your private key here. This will be stored on the device.", helpText)));
         linearLayout.addView(helpTextViewPrivateKey, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, LocaleController.isRTL ? Gravity.RIGHT : Gravity.LEFT, 24, 10, 24, 0));
 
         TLRPC.UserFull userFull = MessagesController.getInstance(currentAccount).getUserFull(UserConfig.getInstance(currentAccount).getClientUserId());
