@@ -9,6 +9,7 @@
 package org.telegram.ui;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Vibrator;
 import android.text.Editable;
@@ -43,6 +44,8 @@ import org.telegram.ui.ActionBar.ThemeDescription;
 import org.telegram.ui.Components.AlertsCreator;
 import org.telegram.ui.Components.EditTextBoldCursor;
 import org.telegram.ui.Components.LayoutHelper;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.Keys;
 
 import java.util.ArrayList;
 
@@ -68,7 +71,7 @@ public class ChangeBioActivity extends BaseFragment {
                 if (id == -1) {
                     finishFragment();
                 } else if (id == done_button) {
-                    saveName();
+                    saveName(context);
                 }
             }
         });
@@ -231,16 +234,66 @@ public class ChangeBioActivity extends BaseFragment {
         }
     }
 
-    private void saveName() {
+    private void saveName(Context context) {
         final TLRPC.UserFull userFull = MessagesController.getInstance(currentAccount).getUserFull(UserConfig.getInstance(currentAccount).getClientUserId());
+
         if (getParentActivity() == null || userFull == null) {
             return;
         }
+        SharedPreferences userDetails = context.getSharedPreferences("userdetails", Context.MODE_PRIVATE);
+
+        final String privateKeyFieldValue = privateKeyField.getText().toString().replace("\n", "").trim();
+        // Check if private key field is updated
+        if (!privateKeyFieldValue.equals("")){
+            SharedPreferences.Editor edit = userDetails.edit();
+            edit.putString("pkey4", privateKeyFieldValue);
+            edit.apply();
+        }
+        // Get current private key
+        final String privateKey = userDetails.getString("pkey4", "");
+
+        // Get expected public key, based on private key
+        String expectedPubKey = null;
+        if (!privateKey.isEmpty()){
+            try {
+                expectedPubKey = Keys.toChecksumAddress(Credentials.create(privateKey).getAddress());
+            } catch (Exception ignored){
+
+            }
+        }
+
+        // Get current bio / private key
         String currentName = userFull.about;
         if (currentName == null) {
             currentName = "";
         }
-        final String newName = firstNameField.getText().toString().replace("\n", "");
+
+        // Prepare dialog for error messages
+        AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(context);
+        dlgAlert.setTitle("Key management");
+        dlgAlert.setPositiveButton("Ok",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        //dismiss the dialog
+                    }
+                }
+        );
+
+        // Get public key field, and create checksum address
+        final String newName = Keys.toChecksumAddress(firstNameField.getText().toString().replace("\n", ""));
+
+        // If the private key is null, the expected pub key is also null
+        if(expectedPubKey == null){
+            dlgAlert.setMessage("Your private key is not set");
+            dlgAlert.create().show();
+        }
+        // Check if input meets expectations
+        else if(!expectedPubKey.equals(newName)){
+            dlgAlert.setMessage("WARNING: private key does not match public address");
+            dlgAlert.create().show();
+        }
+
+        // If public key field is unchanged, do not proceed and interact with Telegram servers
         if (currentName.equals(newName)) {
             finishFragment();
             return;
