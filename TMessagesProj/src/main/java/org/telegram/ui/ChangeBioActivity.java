@@ -292,16 +292,22 @@ public class ChangeBioActivity extends BaseFragment {
         // Get public key field, and create checksum address
         final String newName = Keys.toChecksumAddress(firstNameField.getText().toString().replace("\n", ""));
 
+        SharedPreferences.Editor edit = userDetails.edit();
         // If the private key is null, the expected pub key is also null
         if(expectedPubKey == null){
+            edit.putBoolean("keys_setup", false);
             dlgAlert.setMessage("Your private key is not set");
             dlgAlert.create().show();
         }
         // Check if input meets expectations
         else if(!expectedPubKey.equals(newName)){
+            edit.putBoolean("keys_setup", false);
             dlgAlert.setMessage("WARNING: private key does not match public address");
             dlgAlert.create().show();
+        }else{
+            edit.putBoolean("keys_setup", true);
         }
+        edit.apply();
 
         // If public key field is unchanged, do not proceed and interact with Telegram servers
         if (currentName.equals(newName)) {
