@@ -240,33 +240,6 @@ public class ChangeBioActivity extends BaseFragment {
         if (getParentActivity() == null || userFull == null) {
             return;
         }
-        SharedPreferences userDetails = context.getSharedPreferences("userdetails", Context.MODE_PRIVATE);
-
-        final String privateKeyFieldValue = privateKeyField.getText().toString().replace("\n", "").trim();
-        // Check if private key field is updated
-        if (!privateKeyFieldValue.equals("")){
-            SharedPreferences.Editor edit = userDetails.edit();
-            edit.putString("pkey4", privateKeyFieldValue);
-            edit.apply();
-        }
-        // Get current private key
-        final String privateKey = userDetails.getString("pkey4", "");
-
-        // Get expected public key, based on private key
-        String expectedPubKey = null;
-        if (!privateKey.isEmpty()){
-            try {
-                expectedPubKey = Keys.toChecksumAddress(Credentials.create(privateKey).getAddress());
-            } catch (Exception ignored){
-
-            }
-        }
-
-        // Get current bio / private key
-        String currentName = userFull.about;
-        if (currentName == null) {
-            currentName = "";
-        }
 
         // Prepare dialog for error messages
         AlertDialog.Builder dlgAlert  = new AlertDialog.Builder(context);
@@ -278,6 +251,35 @@ public class ChangeBioActivity extends BaseFragment {
                     }
                 }
         );
+
+        SharedPreferences userDetails = context.getSharedPreferences("userdetails", Context.MODE_PRIVATE);
+        final String privateKey = userDetails.getString("pkey5", "");
+        final String privateKeyFieldValue = privateKeyField.getText().toString().replace("\n", "").trim();
+        String expectedPubKey = null;
+        // Check if private key field is updated
+        if (!privateKeyFieldValue.isEmpty()){
+            try {
+                // Check if privatekey field is valid and save on disk
+                expectedPubKey = Keys.toChecksumAddress(Credentials.create(privateKeyFieldValue).getAddress());
+            } catch (Exception ignored){
+                dlgAlert.setMessage("ERROR: private key is invalid format, progress is not saved.");
+                dlgAlert.create().show();
+                finishFragment();
+                return;
+            }
+            SharedPreferences.Editor edit = userDetails.edit();
+            edit.putString("pkey5", privateKeyFieldValue);
+            edit.apply();
+        }
+        else if(!privateKey.isEmpty()){
+            expectedPubKey = Keys.toChecksumAddress(Credentials.create(privateKey).getAddress());
+        }
+
+        // Get current bio / private key
+        String currentName = userFull.about;
+        if (currentName == null) {
+            currentName = "";
+        }
 
         // Get public key field, and create checksum address
         final String newName = Keys.toChecksumAddress(firstNameField.getText().toString().replace("\n", ""));
