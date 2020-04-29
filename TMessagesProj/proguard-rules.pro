@@ -3,6 +3,13 @@
 -keepclassmembernames class * {
     @com.google.android.gms.common.annotation.KeepName *;
 }
+#-dontwarn com.fasterxml.jackson.databind.**
+#-keep class com.fasterxml.jackson.core.** { ; }
+#-keep interface com.fasterxml.jackson.core { ; }
+#-keep class com.fasterxml.jackson.databind. { ; }
+#-keep interface com.fasterxml.jackson.databind { ; }
+#-keep class com.fasterxml.jackson.annotation. { ; }
+#-keep interface com.fasterxml.jackson.annotation.* { *; }
 -keep class org.telegram.messenger.* { *; }
 -keep class org.telegram.messenger.camera.* { *; }
 -keep class org.telegram.messenger.secretmedia.* { *; }

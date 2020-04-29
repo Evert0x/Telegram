@@ -22,6 +22,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -31,7 +32,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.telegram.PhoneFormat.PhoneFormat;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.android.exoplayer2.util.Log;
+
+import org.telegram.contracts.ERC20;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.ImageLocation;
@@ -47,6 +51,87 @@ import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.SnowflakesEffect;
+import org.web3j.crypto.Credentials;
+import org.web3j.protocol.ObjectMapperFactory;
+import org.web3j.protocol.Web3j;
+//import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.methods.response.EthBlockNumber;
+import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.protocol.core.methods.response.Web3ClientVersion;
+import org.web3j.protocol.http.HttpService;
+
+import org.web3j.tx.gas.DefaultGasProvider;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
+class RetrieveFeedTask extends AsyncTask<String, Void, Object> {
+
+    private Exception exception;
+    public static final MediaType JSON
+            = MediaType.parse("application/json; charset=utf-8");
+    String post(String url, String json) throws IOException {
+        OkHttpClient client = new OkHttpClient();
+        RequestBody body = RequestBody.create(JSON, json);
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
+    }
+
+    @Override
+    protected Web3ClientVersion doInBackground(String... strings) {
+        ObjectMapper mapper = ObjectMapperFactory.getObjectMapper();
+        //mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        HttpService xor = new HttpService("https://mainnet.infura.io/v3/21ea206b0394489fa99ade05cf9cb614");
+        Web3j web3 = Web3j.build(xor);
+        String account = "0xAe4281d74056F3975941b66daf324bB893279cF0";
+        String daiaddr = "0x6b175474e89094c44da98b954eedeac495271d0f";
+        //mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        //Web3j web3 = Web3j.build(new HttpService("https://mainnet.infura.io/v3/21ea206b0394489fa99ade05cf9cb614"));
+        ERC20 contract = ERC20.load(daiaddr, web3, Credentials.create("123245"), new DefaultGasProvider());
+        try {
+            Web3ClientVersion web3ClientVersion = web3.web3ClientVersion().send();
+            web3ClientVersion = web3.web3ClientVersion().sendAsync().get();
+            BigInteger xx = contract.balanceOf(account);
+            web3ClientVersion = web3.web3ClientVersion().sendAsync().get();
+            EthBlockNumber x = web3.ethBlockNumber().sendAsync().get();
+
+
+            String p = post("https://mainnet.infura.io/v3/21ea206b0394489fa99ade05cf9cb614", "{\"jsonrpc\":\"2.0\",\"method\":\"web3_clientVersion\",\"params\":[],\"id\":67}");
+            //Web3ClientVersion web3ClientVersion = web3.web3ClientVersion().sendAsync().get();
+            String one = web3.web3ClientVersion().getJsonrpc();
+            String two = web3.web3ClientVersion().getMethod();
+            long id = web3.web3ClientVersion().getId();
+            List<?> tre = web3.web3ClientVersion().getParams();
+            //String ap = web3ClientVersion.getRawResponse();
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    protected void onPostExecute(Web3ClientVersion x) {
+       //    // TODO: check this.exception
+       // TODO: do something with the feed
+   }
+}
 
 public class DrawerProfileCell extends FrameLayout {
 
@@ -69,7 +154,6 @@ public class DrawerProfileCell extends FrameLayout {
 
     public DrawerProfileCell(Context context) {
         super(context);
-
         shadowView = new ImageView(context);
         shadowView.setVisibility(INVISIBLE);
         shadowView.setScaleType(ImageView.ScaleType.FIT_XY);
@@ -256,6 +340,68 @@ public class DrawerProfileCell extends FrameLayout {
         if (snowflakesEffect != null) {
             snowflakesEffect.onDraw(this, canvas);
         }
+
+        SharedPreferences userDetails = getContext().getSharedPreferences("userdetails", Context.MODE_PRIVATE);
+        final boolean setup_finished = userDetails.getBoolean("keys_setup", false);
+        if(setup_finished) {
+            String account = "0xAe4281d74056F3975941b66daf324bB893279cF0";
+            String daiaddr = "0x6b175474e89094c44da98b954eedeac495271d0f";
+
+            new RetrieveFeedTask().execute();
+
+            Web3j web3 = Web3j.build(new HttpService("https://mainnet.infura.io/v3/21ea206b0394489fa99ade05cf9cb614"));
+            ERC20 contract = ERC20.load(daiaddr, web3, Credentials.create("123245"), new DefaultGasProvider());
+            try {
+                //BigInteger x = contract.balanceOf(account);
+                //String one = func.getName();
+                //List<Type> two = func.getInputParameters();
+                //List<TypeReference<Type>> tre = func.getOutputParameters();
+
+
+                int l = 100/ 5;
+                //Log.e("hehe2", balance.toString());
+                //phoneTextView.setText(balance.toString());
+            } catch (Exception e) {
+                Log.e("hehe", e.getMessage());
+                //.printStackTrace();
+            }
+
+           // try {
+            //   // Web3ClientVersion web3ClientVersion = web3.web3ClientVersion().send();
+            //} catch (IOException e) {
+            //    e.printStackTrace();
+            //}
+           // try {
+            //    EthBlock pp = web3.ethGetBlockByNumber(DefaultBlockParameter.valueOf(BigInteger.valueOf(9966487)), true).send();
+           // } catch (IOException e) {
+           //     e.printStackTrace();
+           // }
+            EthGetBalance ethGetBalance = null;
+            //try {
+                //Request<?, EthGetBalance> x = web3.ethGetBalance(account, DefaultBlockParameterName.LATEST);
+                //String p = x.getJsonrpc();
+                //String u = x.getMethod();
+                //EthGetBalance h = x.send();
+
+
+                //BigInteger wei = ethGetBalance.getBalance();
+           // } catch (IOException e) {
+           ///     e.printStackTrace();
+          //  }
+
+
+            //ERC20 contract = ERC20.load(daiaddr, web3, Credentials.create("123245"), new DefaultGasProvider());
+            try {
+                //BigInteger balance = contract.balanceOf(account).sendAsync().get();
+                //Log.e("hehe2", balance.toString());
+                //phoneTextView.setText(balance.toString());
+            } catch (Exception e) {
+                Log.e("hehe", e.getMessage());
+                //.printStackTrace();
+            }
+        }else{
+            phoneTextView.setText("Ethereum setup not finished");
+        }
     }
 
     public boolean isAccountsShown() {
@@ -277,7 +423,6 @@ public class DrawerProfileCell extends FrameLayout {
         accountsShown = accounts;
         setArrowState(false);
         nameTextView.setText(UserObject.getUserName(user));
-        phoneTextView.setText(PhoneFormat.getInstance().format("+" + user.phone));
         AvatarDrawable avatarDrawable = new AvatarDrawable(user);
         avatarDrawable.setColor(Theme.getColor(Theme.key_avatar_backgroundInProfileBlue));
         avatarImageView.setImage(ImageLocation.getForUser(user, false), "50_50", avatarDrawable, user);
