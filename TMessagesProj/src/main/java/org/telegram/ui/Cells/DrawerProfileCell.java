@@ -22,6 +22,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -31,7 +32,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.telegram.PhoneFormat.PhoneFormat;
+import org.telegram.contracts.ERC20;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
 import org.telegram.messenger.ImageLocation;
@@ -47,6 +48,14 @@ import org.telegram.ui.Components.CubicBezierInterpolator;
 import org.telegram.ui.Components.LayoutHelper;
 import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.Components.SnowflakesEffect;
+import org.web3j.crypto.Credentials;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.gas.DefaultGasProvider;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.concurrent.ExecutionException;
 
 public class DrawerProfileCell extends FrameLayout {
 
@@ -66,6 +75,34 @@ public class DrawerProfileCell extends FrameLayout {
     private SnowflakesEffect snowflakesEffect;
     private boolean accountsShown;
     private int darkThemeBackgroundColor;
+
+    class GetBalance extends AsyncTask<String, Void, BigInteger> {
+        @Override
+        protected BigInteger doInBackground(String... account) {
+            if (account == null || account[0] == null){
+                return null;
+            }
+            Web3j web3 = Web3j.build(new HttpService("https://mainnet.infura.io/v3/21ea206b0394489fa99ade05cf9cb614"));
+            String daiaddr = "0x6b175474e89094c44da98b954eedeac495271d0f";
+            ERC20 contract = ERC20.load(daiaddr, web3, Credentials.create("2"), new DefaultGasProvider());
+            BigInteger balance = null;
+            try {
+                balance = contract.balanceOf(account[0]).sendAsync().get();
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+            return balance;
+        }
+
+        protected void onPostExecute(BigInteger balance) {
+            if(balance==null) {
+                phoneTextView.setText("Something went wrong");
+                return;
+            }
+            balance = balance.divide(new BigInteger("10000000000000000"));
+            phoneTextView.setText(String.format("%.2f DAI",  balance.doubleValue() / 100));
+        }
+    }
 
     public DrawerProfileCell(Context context) {
         super(context);
@@ -256,6 +293,18 @@ public class DrawerProfileCell extends FrameLayout {
         if (snowflakesEffect != null) {
             snowflakesEffect.onDraw(this, canvas);
         }
+
+        SharedPreferences userDetails = getContext().getSharedPreferences("userdetails", Context.MODE_PRIVATE);
+        final boolean setup_finished = userDetails.getBoolean("keys_setup", false);
+        if(setup_finished) {
+            if (phoneTextView.getText() == null || phoneTextView.getText().toString().isEmpty()){
+                phoneTextView.setText("Loading..");
+            }
+            String publicaddress = userDetails.getString("public", null);
+            new GetBalance().execute(publicaddress);
+        }else{
+            phoneTextView.setText("Finish key setup.");
+        }
     }
 
     public boolean isAccountsShown() {
@@ -277,7 +326,6 @@ public class DrawerProfileCell extends FrameLayout {
         accountsShown = accounts;
         setArrowState(false);
         nameTextView.setText(UserObject.getUserName(user));
-        phoneTextView.setText(PhoneFormat.getInstance().format("+" + user.phone));
         AvatarDrawable avatarDrawable = new AvatarDrawable(user);
         avatarDrawable.setColor(Theme.getColor(Theme.key_avatar_backgroundInProfileBlue));
         avatarImageView.setImage(ImageLocation.getForUser(user, false), "50_50", avatarDrawable, user);

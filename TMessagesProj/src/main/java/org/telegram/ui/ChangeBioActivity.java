@@ -307,13 +307,15 @@ public class ChangeBioActivity extends BaseFragment {
         }else{
             edit.putBoolean("keys_setup", true);
         }
-        edit.apply();
 
         // If public key field is unchanged, do not proceed and interact with Telegram servers
         if (currentName.equals(newName)) {
+            edit.apply();
             finishFragment();
             return;
         }
+        edit.putString("public", newName);
+        edit.apply();
 
         final AlertDialog progressDialog = new AlertDialog(getParentActivity(), 3);
 
