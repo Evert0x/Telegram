@@ -82,8 +82,12 @@ public class DrawerProfileCell extends FrameLayout {
             if (account == null || account[0] == null){
                 return null;
             }
-            Web3j web3 = Web3j.build(new HttpService("https://mainnet.infura.io/v3/21ea206b0394489fa99ade05cf9cb614"));
-            String daiaddr = "0x6b175474e89094c44da98b954eedeac495271d0f";
+            String infurakey = getResources().getString(R.string.INFURA_KEY);
+            String daiaddr = getResources().getString(R.string.DAI_ADDRESS);;
+
+            Web3j web3 = Web3j.build(new HttpService(String.format("https://mainnet.infura.io/v3/%s", infurakey)));
+
+            //Use dummy credentials, not needed for this call.
             ERC20 contract = ERC20.load(daiaddr, web3, Credentials.create("2"), new DefaultGasProvider());
             BigInteger balance = null;
             try {

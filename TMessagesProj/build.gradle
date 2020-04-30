@@ -94,6 +94,8 @@ android {
             applicationIdSuffix ".beta"
             minifyEnabled false
             multiDexEnabled true
+            resValue "string", "INFURA_KEY", INFURA_KEY
+            resValue "string", "DAI_ADDRESS", DAI_ADDRESS
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
 
@@ -138,6 +140,8 @@ android {
             applicationIdSuffix ".beta"
             minifyEnabled false
             multiDexEnabled true
+            resValue "string", "INFURA_KEY", INFURA_KEY
+            resValue "string", "DAI_ADDRESS", DAI_ADDRESS
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
 
@@ -148,6 +152,8 @@ android {
             minifyEnabled false
             shrinkResources false
             multiDexEnabled true
+            resValue "string", "INFURA_KEY", INFURA_KEY
+            resValue "string", "DAI_ADDRESS", DAI_ADDRESS
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
