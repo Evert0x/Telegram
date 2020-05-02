@@ -31950,6 +31950,16 @@ public class TLRPC {
         public int folder_id;
         public TL_peerSettings settings;
 
+        public Boolean hasPubKey(){
+            if(about == null) {
+                return false;
+            }
+            if(about.startsWith("F")){
+                return true;
+            }
+            return false;
+        }
+
         public static UserFull TLdeserialize(AbstractSerializedData stream, int constructor, boolean exception) {
             UserFull result = null;
             switch (constructor) {
