@@ -9,11 +9,13 @@
 package org.telegram.ui.Components;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
@@ -59,6 +61,9 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
 
     private SharedMediaLayout.SharedMediaPreloader sharedMediaPreloader;
 
+    private int startX;
+    private int startY;
+
     public ChatAvatarContainer(Context context, ChatActivity chatActivity, boolean needTime) {
         super(context);
         parentFragment = chatActivity;
@@ -71,7 +76,7 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         avatarImageView.setRoundRadius(AndroidUtilities.dp(21));
         addView(avatarImageView);
         if (parentFragment != null && !parentFragment.isInScheduleMode()) {
-            avatarImageView.setOnClickListener(v -> openProfile(true));
+            avatarImageView.setOnTouchListener((v, e) -> openProfile(true, e));
         }
 
         titleTextView = new SimpleTextView(context);
@@ -100,7 +105,7 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         }
 
         if (parentFragment != null && !parentFragment.isInScheduleMode()) {
-            setOnClickListener(v -> openProfile(false));
+            setOnTouchListener((v, e) -> openProfile(false, e));
 
             TLRPC.Chat chat = parentFragment.getCurrentChat();
             statusDrawables[0] = new TypingDotsDrawable();
@@ -114,7 +119,14 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         }
     }
 
-    private void openProfile(boolean byAvatar) {
+    private boolean isAClick(float startX, float endX, float startY, float endY) {
+        float differenceX = Math.abs(startX - endX);
+        float differenceY = Math.abs(startY - endY);
+        int CLICK_ACTION_THRESHOLD = 200;
+        return !(differenceX > CLICK_ACTION_THRESHOLD/* =5 */ || differenceY > CLICK_ACTION_THRESHOLD);
+    }
+
+    private void openProfile(boolean byAvatar){
         if (byAvatar && (AndroidUtilities.isTablet() || AndroidUtilities.displaySize.x > AndroidUtilities.displaySize.y || !avatarImageView.getImageReceiver().hasNotThumb())) {
             byAvatar = false;
         }
@@ -148,6 +160,30 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
             fragment.setPlayProfileAnimation(byAvatar ? 2 : 1);
             parentFragment.presentFragment(fragment);
         }
+    }
+
+    private boolean openProfile(boolean byAvatar, MotionEvent e) {
+        switch (e.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                startX = (int) e.getX();
+                startY = (int) e.getY();
+                break;
+            case MotionEvent.ACTION_UP:
+                int endX = (int) e.getX();
+                int endY = (int) e.getY();
+                // check if tip button exists, if click is correct, and if click is on the tip button
+                if (titleTextView.getRightDrawable() instanceof TipDrawable && isAClick(startX, endX, startY, endY) && titleTextView.isViewContains(startX, startY)) {
+                    // do transfer
+                    TipDrawable data = (TipDrawable)titleTextView.getRightDrawable();
+                    data.setColor(Color.GRAY);
+                    data.invalidateSelf();
+                }
+                else {
+                    openProfile(byAvatar);
+                }
+                break;
+        }
+        return true;
     }
 
     public void setOccupyStatusBar(boolean value) {
@@ -226,7 +262,7 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         if (moneygram) {
             if (!(titleTextView.getRightDrawable() instanceof TipDrawable)){
                 TipDrawable drawable = new TipDrawable(11);
-                drawable.setColor(Theme.getColor(Theme.key_actionBarDefaultSubtitle));
+                drawable.setColor(Color.GREEN);
                 titleTextView.setRightDrawable(drawable);
             }
         }

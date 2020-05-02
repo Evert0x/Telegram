@@ -75,6 +75,20 @@ public class SimpleTextView extends View implements Drawable.Callback {
         setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);
     }
 
+    public boolean isViewContains(int rx, int ry) {
+        int[] l = new int[2];
+        this.getLocationOnScreen(l);
+        int x = l[0];
+        int y = l[1];
+        int w = this.getWidth();
+        int h = this.getHeight();
+
+        if (rx < x || rx > x + w || ry < y || ry > y + h) {
+            return false;
+        }
+        return true;
+    }
+
     public void setTextColor(int color) {
         textPaint.setColor(color);
         invalidate();

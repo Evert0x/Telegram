@@ -40,8 +40,8 @@ public class TipDrawable extends Drawable {
     }
 
     public void setColor(int color) {
-        textPaint.setColor(Color.GREEN);
-        paint.setColor(Color.GREEN);
+        textPaint.setColor(color);
+        paint.setColor(color);
     }
 
     @Override
