@@ -19,6 +19,11 @@ public class TipDrawable extends Drawable {
     private int textWidth;
     private String text;
 
+    public static final int STATE_OPEN = 0;
+    public static final int STATE_PROCESSING = 1;
+    public static final int STATE_DONE = 2;
+    public static final int STATE_FAILED = 3;
+
     public TipDrawable(int textSize) {
         super();
         textPaint.setTextSize(AndroidUtilities.dp(textSize));
@@ -31,15 +36,33 @@ public class TipDrawable extends Drawable {
         textWidth = (int) Math.ceil(textPaint.measureText(text));
     }
 
-    public void checkText() {
-        String newText = "TIP 1$";
-        if (!newText.equals(text)) {
-            text = newText;
-            textWidth = (int) Math.ceil(textPaint.measureText(text));
+    public void setState(int state){
+        switch (state){
+            case STATE_OPEN:
+                setText("TIP 1$");
+                setColor(Color.CYAN);
+                break;
+            case STATE_PROCESSING:
+                setText("Wait..");
+                setColor(Color.YELLOW);
+                break;
+            case STATE_DONE:
+                setText("Done!");
+                setColor(Color.GREEN);
+                break;
+            case STATE_FAILED:
+                setText("Fail.");
+                setColor(Color.RED);
+                break;
         }
+        this.invalidateSelf();
     }
 
-    public void setColor(int color) {
+    private void setText(String text){
+        this.text = text;
+    }
+
+    private void setColor(int color) {
         textPaint.setColor(color);
         paint.setColor(color);
     }

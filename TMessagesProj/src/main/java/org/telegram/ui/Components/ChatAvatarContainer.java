@@ -11,8 +11,10 @@ package org.telegram.ui.Components;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -162,6 +164,40 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         }
     }
 
+    class SendTransaction extends AsyncTask<String, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(String... account) {
+            if (account == null || account[0] == null){
+                return null;
+            }
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return true;
+        }
+
+        protected void onPostExecute(Boolean success) {
+            TipDrawable data = (TipDrawable)titleTextView.getRightDrawable();
+            if (success){
+                data.setState(TipDrawable.STATE_DONE);
+            }
+            else{
+                data.setState(TipDrawable.STATE_FAILED);
+            }
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable(){
+                @Override
+                public void run(){
+                    TipDrawable data = (TipDrawable)titleTextView.getRightDrawable();
+                    data.setState(TipDrawable.STATE_OPEN);
+                }
+            }, 10000);
+        }
+    }
+
+
     private boolean openProfile(boolean byAvatar, MotionEvent e) {
         switch (e.getAction()) {
             case MotionEvent.ACTION_DOWN:
@@ -175,8 +211,8 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
                 if (titleTextView.getRightDrawable() instanceof TipDrawable && isAClick(startX, endX, startY, endY) && titleTextView.isViewContains(startX, startY)) {
                     // do transfer
                     TipDrawable data = (TipDrawable)titleTextView.getRightDrawable();
-                    data.setColor(Color.GRAY);
-                    data.invalidateSelf();
+                    data.setState(TipDrawable.STATE_PROCESSING);
+                    new SendTransaction().execute("test");
                 }
                 else {
                     openProfile(byAvatar);
@@ -262,7 +298,7 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         if (moneygram) {
             if (!(titleTextView.getRightDrawable() instanceof TipDrawable)){
                 TipDrawable drawable = new TipDrawable(11);
-                drawable.setColor(Color.GREEN);
+                drawable.setState(TipDrawable.STATE_OPEN);
                 titleTextView.setRightDrawable(drawable);
             }
         }
