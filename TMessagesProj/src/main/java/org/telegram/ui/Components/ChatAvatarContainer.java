@@ -181,17 +181,17 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         protected void onPostExecute(Boolean success) {
             TipDrawable data = (TipDrawable)titleTextView.getRightDrawable();
             if (success){
-                data.setState(TipDrawable.STATE_DONE);
+                data.setButtonState(TipDrawable.STATE_DONE);
             }
             else{
-                data.setState(TipDrawable.STATE_FAILED);
+                data.setButtonState(TipDrawable.STATE_FAILED);
             }
             Handler handler = new Handler();
             handler.postDelayed(new Runnable(){
                 @Override
                 public void run(){
                     TipDrawable data = (TipDrawable)titleTextView.getRightDrawable();
-                    data.setState(TipDrawable.STATE_OPEN);
+                    data.setButtonState(TipDrawable.STATE_OPEN);
                 }
             }, 10000);
         }
@@ -211,8 +211,10 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
                 if (titleTextView.getRightDrawable() instanceof TipDrawable && isAClick(startX, endX, startY, endY) && titleTextView.isViewContains(startX, startY)) {
                     // do transfer
                     TipDrawable data = (TipDrawable)titleTextView.getRightDrawable();
-                    data.setState(TipDrawable.STATE_PROCESSING);
-                    new SendTransaction().execute("test");
+                    if (data.getButtonState() == TipDrawable.STATE_OPEN) {
+                        new SendTransaction().execute("test");
+                        data.setButtonState(TipDrawable.STATE_PROCESSING);
+                    }
                 }
                 else {
                     openProfile(byAvatar);
@@ -298,7 +300,7 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         if (moneygram) {
             if (!(titleTextView.getRightDrawable() instanceof TipDrawable)){
                 TipDrawable drawable = new TipDrawable(11);
-                drawable.setState(TipDrawable.STATE_OPEN);
+                drawable.setButtonState(TipDrawable.STATE_OPEN);
                 titleTextView.setRightDrawable(drawable);
             }
         }

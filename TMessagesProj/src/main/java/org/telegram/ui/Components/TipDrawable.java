@@ -18,6 +18,7 @@ public class TipDrawable extends Drawable {
     private TextPaint textPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private int textWidth;
     private String text;
+    private int state;
 
     public static final int STATE_OPEN = 0;
     public static final int STATE_PROCESSING = 1;
@@ -34,9 +35,14 @@ public class TipDrawable extends Drawable {
 
         text = "TIP 1$";
         textWidth = (int) Math.ceil(textPaint.measureText(text));
+        state = 0;
     }
 
-    public void setState(int state){
+    public int getButtonState(){
+        return this.state;
+    }
+
+    public void setButtonState(int state){
         switch (state){
             case STATE_OPEN:
                 setText("TIP 1$");
@@ -55,6 +61,7 @@ public class TipDrawable extends Drawable {
                 setColor(Color.RED);
                 break;
         }
+        this.state = state;
         this.invalidateSelf();
     }
 
