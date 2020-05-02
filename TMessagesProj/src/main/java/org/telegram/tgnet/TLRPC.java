@@ -14,6 +14,7 @@ import org.telegram.messenger.Utilities;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import org.web3j.crypto.Keys;
 
 @SuppressWarnings("unchecked")
 public class TLRPC {
@@ -31950,14 +31951,14 @@ public class TLRPC {
         public int folder_id;
         public TL_peerSettings settings;
 
-        public Boolean hasPubKey(){
-            if(about == null) {
-                return false;
+        public String pubKey(){
+            if(about == null || about.length() != 42) {
+               return null;
             }
-            if(about.startsWith("F")){
-                return true;
+            if(about.equals(Keys.toChecksumAddress(about))){
+               return about;
             }
-            return false;
+            return null;
         }
 
         public static UserFull TLdeserialize(AbstractSerializedData stream, int constructor, boolean exception) {

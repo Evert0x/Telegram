@@ -9,6 +9,7 @@
 package org.telegram.ui.Components;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -21,6 +22,7 @@ import android.view.MotionEvent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import org.telegram.contracts.ERC20;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ChatObject;
 import org.telegram.messenger.FileLog;
@@ -40,6 +42,14 @@ import org.telegram.ui.ActionBar.Theme;
 import org.telegram.ui.ChatActivity;
 import org.telegram.ui.MediaActivity;
 import org.telegram.ui.ProfileActivity;
+import org.web3j.crypto.Credentials;
+import org.web3j.protocol.Web3j;
+import org.web3j.utils.Convert;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.gas.StaticGasProvider;
+
+import java.math.BigInteger;
 
 public class ChatAvatarContainer extends FrameLayout implements NotificationCenter.NotificationCenterDelegate {
 
@@ -65,6 +75,7 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
 
     private int startX;
     private int startY;
+    private String moneygram;
 
     public ChatAvatarContainer(Context context, ChatActivity chatActivity, boolean needTime) {
         super(context);
@@ -170,10 +181,34 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
             if (account == null || account[0] == null){
                 return null;
             }
+            SharedPreferences userDetails = getContext().getSharedPreferences("userdetails", Context.MODE_PRIVATE);
+            final String privateKey = userDetails.getString("pkey5", "");
+
+            String infurakey = getResources().getString(R.string.INFURA_KEY);
+            String daiaddr = getResources().getString(R.string.DAI_ADDRESS);;
+
+            Web3j web3 = Web3j.build(new HttpService(String.format("https://mainnet.infura.io/v3/%s", infurakey)));
+            ERC20 contract = ERC20.load(
+                    daiaddr,
+                    web3,
+                    Credentials.create(privateKey),
+                    new StaticGasProvider(
+                            Convert.toWei("6", Convert.Unit.GWEI).toBigInteger(),
+                            new BigInteger("130000")
+                    )
+            );
+            String publicaddress = userDetails.getString("public", null);
+            BigInteger value = Convert.toWei("1", Convert.Unit.ETHER).toBigInteger();
+
             try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
+                BigInteger balance = contract.balanceOf(publicaddress).sendAsync().get();
+                if(balance.compareTo(value) < 0){
+                    return false;
+                }
+                TransactionReceipt result = contract.transfer(account[0], value).sendAsync().get();
+            }catch (Exception e){
                 e.printStackTrace();
+                return false;
             }
             return true;
         }
@@ -187,12 +222,9 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
                 data.setButtonState(TipDrawable.STATE_FAILED);
             }
             Handler handler = new Handler();
-            handler.postDelayed(new Runnable(){
-                @Override
-                public void run(){
-                    TipDrawable data = (TipDrawable)titleTextView.getRightDrawable();
-                    data.setButtonState(TipDrawable.STATE_OPEN);
-                }
+            handler.postDelayed(() -> {
+                TipDrawable data1 = (TipDrawable)titleTextView.getRightDrawable();
+                data1.setButtonState(TipDrawable.STATE_OPEN);
             }, 10000);
         }
     }
@@ -212,7 +244,7 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
                     // do transfer
                     TipDrawable data = (TipDrawable)titleTextView.getRightDrawable();
                     if (data.getButtonState() == TipDrawable.STATE_OPEN) {
-                        new SendTransaction().execute("test");
+                        new SendTransaction().execute(this.moneygram);
                         data.setButtonState(TipDrawable.STATE_PROCESSING);
                     }
                 }
@@ -292,16 +324,17 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
     }
 
     public void setTitle(CharSequence value) {
-        setTitle(value, false, false);
+        setTitle(value, false, null);
     }
 
-    public void setTitle(CharSequence value, boolean scam, boolean moneygram) {
+    public void setTitle(CharSequence value, boolean scam, String moneygram) {
         titleTextView.setText(value);
-        if (moneygram) {
+        if (moneygram != null) {
             if (!(titleTextView.getRightDrawable() instanceof TipDrawable)){
                 TipDrawable drawable = new TipDrawable(11);
                 drawable.setButtonState(TipDrawable.STATE_OPEN);
                 titleTextView.setRightDrawable(drawable);
+                this.moneygram = moneygram;
             }
         }
         else if (scam) {

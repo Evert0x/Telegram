@@ -8988,7 +8988,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 avatarContainer.setTitle(LocaleController.getString("ScheduledMessages", R.string.ScheduledMessages));
             }
         } else if (currentChat != null) {
-            avatarContainer.setTitle(currentChat.title, currentChat.scam, false);
+            avatarContainer.setTitle(currentChat.title, currentChat.scam, null);
         } else if (currentUser != null) {
             if (currentUser.self) {
                 avatarContainer.setTitle(LocaleController.getString("SavedMessages", R.string.SavedMessages));
@@ -8997,11 +8997,11 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                     avatarContainer.setTitle(PhoneFormat.getInstance().format("+" + currentUser.phone));
                 } else {
                     userInfo = MessagesController.getInstance(currentAccount).getUserFull(currentUser.id);
-                    avatarContainer.setTitle(UserObject.getUserName(currentUser), currentUser.scam, userInfo.hasPubKey());
+                    avatarContainer.setTitle(UserObject.getUserName(currentUser), currentUser.scam, userInfo.pubKey());
                 }
             } else {
                 userInfo = MessagesController.getInstance(currentAccount).getUserFull(currentUser.id);
-                avatarContainer.setTitle(UserObject.getUserName(currentUser), currentUser.scam, userInfo.hasPubKey());
+                avatarContainer.setTitle(UserObject.getUserName(currentUser), currentUser.scam, userInfo.pubKey());
             }
         }
         setParentActivityTitle(avatarContainer.getTitleTextView().getText());
