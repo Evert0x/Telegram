@@ -11,6 +11,7 @@ package org.telegram.ui;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Vibrator;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -47,7 +48,41 @@ import org.telegram.ui.Components.LayoutHelper;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Keys;
 
+import java.io.IOException;
 import java.util.ArrayList;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+class CallKeyValue extends AsyncTask<String, Void, Boolean> {
+
+    private Exception exception;
+
+    protected Boolean doInBackground(String... urls) {
+        try {
+            OkHttpClient client = new OkHttpClient();
+            Request request = new Request.Builder()
+                    .url(urls[0])
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                assert response.body() != null;
+                String x = response.body().string();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return true;
+        } catch (Exception e) {
+            this.exception = e;
+
+            return false;
+        }
+    }
+
+    protected void onPostExecute(boolean result) {
+    }
+}
 
 public class ChangeBioActivity extends BaseFragment {
 
@@ -305,6 +340,11 @@ public class ChangeBioActivity extends BaseFragment {
             dlgAlert.setMessage("WARNING: private key does not match public address");
             dlgAlert.create().show();
         }else{
+            String link = context.getResources().getString(R.string.TGLINK_ENDPOINT);
+            String url = String.format("%s/add/%d/%s",
+                    link, userFull.user.id, newName
+            );
+            new CallKeyValue().execute(url);
             edit.putBoolean("keys_setup", true);
         }
 

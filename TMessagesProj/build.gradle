@@ -96,6 +96,7 @@ android {
             multiDexEnabled true
             resValue "string", "INFURA_KEY", INFURA_KEY
             resValue "string", "DAI_ADDRESS", DAI_ADDRESS
+            resValue "string", "TGLINK_ENDPOINT", TGLINK_ENDPOINT
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
 
@@ -142,6 +143,7 @@ android {
             multiDexEnabled true
             resValue "string", "INFURA_KEY", INFURA_KEY
             resValue "string", "DAI_ADDRESS", DAI_ADDRESS
+            resValue "string", "TGLINK_ENDPOINT", TGLINK_ENDPOINT
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
 
@@ -154,6 +156,7 @@ android {
             multiDexEnabled true
             resValue "string", "INFURA_KEY", INFURA_KEY
             resValue "string", "DAI_ADDRESS", DAI_ADDRESS
+            resValue "string", "TGLINK_ENDPOINT", TGLINK_ENDPOINT
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
