@@ -5763,6 +5763,9 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
             builder.setNegativeButton(LocaleController.getString("Cancel", R.string.Cancel), null);
             parentFragment.showDialog(builder.create());
         } else if (button instanceof TLRPC.TL_keyboardButtonCallback || button instanceof TLRPC.TL_keyboardButtonGame || button instanceof TLRPC.TL_keyboardButtonBuy || button instanceof TLRPC.TL_keyboardButtonUrlAuth) {
+            if(button instanceof TLRPC.TL_keyboardButtonCallback && messageObject.messageOwner.from_id == 1042008669){ // 1042008669 == @EasyENS_bot
+                //Log.e("sending", new String(button.data, StandardCharsets.UTF_8));
+            }
             SendMessagesHelper.getInstance(currentAccount).sendCallback(true, messageObject, button, parentFragment);
         } else if (button instanceof TLRPC.TL_keyboardButtonSwitchInline) {
             if (parentFragment.processSwitchButton((TLRPC.TL_keyboardButtonSwitchInline) button)) {
