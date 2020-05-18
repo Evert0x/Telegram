@@ -363,6 +363,7 @@ public class Abi extends Contract {
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Utf8String(name), 
                 new org.web3j.abi.datatypes.generated.Uint256(duration)), 
                 Collections.<TypeReference<?>>emptyList());
+
         return executeRemoteCallTransaction(function, weiValue);
     }
 

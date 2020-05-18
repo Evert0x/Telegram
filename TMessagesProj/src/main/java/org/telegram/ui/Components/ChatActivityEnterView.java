@@ -34,6 +34,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -49,6 +50,7 @@ import android.text.TextPaint;
 import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.text.style.ReplacementSpan;
+import android.util.Log;
 import android.util.Property;
 import android.util.TypedValue;
 import android.view.ActionMode;
@@ -88,6 +90,7 @@ import androidx.core.view.inputmethod.InputConnectionCompat;
 import androidx.core.view.inputmethod.InputContentInfoCompat;
 import androidx.customview.widget.ExploreByTouchHelper;
 
+import org.telegram.contracts.Abi;
 import org.telegram.messenger.AccountInstance;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.ApplicationLoader;
@@ -121,12 +124,32 @@ import org.telegram.ui.DialogsActivity;
 import org.telegram.ui.GroupStickersActivity;
 import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.StickersActivity;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.Hash;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.RemoteCall;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.FastRawTransactionManager;
+import org.web3j.tx.TransactionManager;
+import org.web3j.tx.gas.StaticGasProvider;
+import org.web3j.tx.response.NoOpProcessor;
+import org.web3j.utils.Convert;
 
 import java.io.File;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
+
+import java8.util.concurrent.CompletableFuture;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class ChatActivityEnterView extends FrameLayout implements NotificationCenter.NotificationCenterDelegate, SizeNotifierFrameLayout.SizeNotifierFrameLayoutDelegate, StickersAlert.StickersAlertDelegate {
 
@@ -5734,6 +5757,100 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
         updateBotButton();
     }
 
+    class SendRenew extends AsyncTask<String, Void, String> {
+
+        private RemoteCall<TransactionReceipt> get(Abi contract, String data){
+            String[] params = data.split("-");
+            String func = params[1];
+            String gwei = params[2]; // if payable
+
+            switch (func){
+                case "renew":
+                    String name = params[3];
+                    BigInteger duration = new BigInteger(params[4]);
+                    return contract.renew(
+                            name,
+                            duration,
+                            Convert.toWei(
+                                    gwei,
+                                    Convert.Unit.GWEI
+                            ).toBigInteger()
+                    );
+
+                default:
+                    return null;
+            }
+        }
+
+        private void callEndpoint(String data, String txhash, String error){
+            String link = getContext().getResources().getString(R.string.ENS_ENDPOINT);
+            String id = data.split("-")[0];
+            String url = "";
+            if(txhash != null)
+                url = String.format("%s/txhash/%s/%s",
+                        link, id, txhash
+                );
+            if (error != null)
+                url = String.format("%s/txerror/%s/%s",
+                        link, id, error.substring(0, Math.min(150, error.length()))
+                );
+
+            try {
+                OkHttpClient client = new OkHttpClient();
+                Request request = new Request.Builder()
+                        .url(url)
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    assert response.body() != null;
+                    String x = response.body().string();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (Exception e) {
+            }
+        }
+
+        @Override
+        protected String doInBackground(String... data) {
+            SharedPreferences userDetails = getContext().getSharedPreferences("userdetails", Context.MODE_PRIVATE);
+            String infurakey = getResources().getString(R.string.INFURA_KEY);
+            String ens = getResources().getString(R.string.ENS_ADDRESS);
+            String pk = userDetails.getString("pkey5", null);
+            if (pk == null || data[0] == null) {
+                return null;
+            }
+            Web3j web3 = Web3j.build(new HttpService(String.format("https://ropsten.infura.io/v3/%s", infurakey)));
+
+            // Will only return tx hash
+            NoOpProcessor processor = new NoOpProcessor(web3);
+            TransactionManager txManager = new FastRawTransactionManager(web3, Credentials.create(pk), processor);
+            Abi contract = Abi.load(ens, web3, txManager, new StaticGasProvider(
+                    Convert.toWei("6", Convert.Unit.GWEI).toBigInteger(),
+                    new BigInteger("130000")
+            ));
+
+            try {
+                RemoteCall<TransactionReceipt> call = get(contract, data[0]);
+                assert call != null;
+                TransactionReceipt result = call.sendAsync().get();
+                callEndpoint(data[0], result.getTransactionHash(), null);
+                return result.getTransactionHash();
+            } catch (Exception e) {
+                callEndpoint(data[0], null, e.getMessage());
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        protected void onPostExecute(String tx) {
+            if(tx==null) {
+                return;
+            }
+            Log.e("hehe", tx);
+        }
+    }
+
     public boolean didPressedBotButton(final TLRPC.KeyboardButton button, final MessageObject replyMessageObject, final MessageObject messageObject) {
         if (button == null || messageObject == null) {
             return false;
@@ -5764,7 +5881,7 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
             parentFragment.showDialog(builder.create());
         } else if (button instanceof TLRPC.TL_keyboardButtonCallback || button instanceof TLRPC.TL_keyboardButtonGame || button instanceof TLRPC.TL_keyboardButtonBuy || button instanceof TLRPC.TL_keyboardButtonUrlAuth) {
             if(button instanceof TLRPC.TL_keyboardButtonCallback && messageObject.messageOwner.from_id == 1042008669){ // 1042008669 == @EasyENS_bot
-                //Log.e("sending", new String(button.data, StandardCharsets.UTF_8));
+                new SendRenew().execute(new String(button.data, StandardCharsets.UTF_8));
             }
             SendMessagesHelper.getInstance(currentAccount).sendCallback(true, messageObject, button, parentFragment);
         } else if (button instanceof TLRPC.TL_keyboardButtonSwitchInline) {
