@@ -185,9 +185,10 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
             final String privateKey = userDetails.getString("pkey5", "");
 
             String infurakey = getResources().getString(R.string.INFURA_KEY);
+            String infura = getResources().getString(R.string.INFURA_ENDPOINT);
             String daiaddr = getResources().getString(R.string.DAI_ADDRESS);;
 
-            Web3j web3 = Web3j.build(new HttpService(String.format("https://mainnet.infura.io/v3/%s", infurakey)));
+            Web3j web3 = Web3j.build(new HttpService(String.format("%s/%s", infura, infurakey)));
             ERC20 contract = ERC20.load(
                     daiaddr,
                     web3,

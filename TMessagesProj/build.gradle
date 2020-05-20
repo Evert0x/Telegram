@@ -95,9 +95,12 @@ android {
             minifyEnabled false
             multiDexEnabled true
             resValue "string", "INFURA_KEY", INFURA_KEY
+            resValue "string", "INFURA_ENDPOINT", INFURA_ENDPOINT
+            resValue "string", "AAVE_ADDRESS", AAVE_ADDRESS
             resValue "string", "DAI_ADDRESS", DAI_ADDRESS
             resValue "string", "ENS_ADDRESS", ENS_ADDRESS
             resValue "string", "TGLINK_ENDPOINT", TGLINK_ENDPOINT
+            resValue "string", "AAVE_ENDPOINT", AAVE_ENDPOINT
             resValue "string", "ENS_ENDPOINT", ENS_ENDPOINT
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -144,8 +147,11 @@ android {
             minifyEnabled false
             multiDexEnabled true
             resValue "string", "INFURA_KEY", INFURA_KEY
+            resValue "string", "INFURA_ENDPOINT", INFURA_ENDPOINT
+            resValue "string", "AAVE_ADDRESS", AAVE_ADDRESS
             resValue "string", "DAI_ADDRESS", DAI_ADDRESS
             resValue "string", "ENS_ADDRESS", ENS_ADDRESS
+            resValue "string", "AAVE_ENDPOINT", AAVE_ENDPOINT
             resValue "string", "TGLINK_ENDPOINT", TGLINK_ENDPOINT
             resValue "string", "ENS_ENDPOINT", ENS_ENDPOINT
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
@@ -159,7 +165,10 @@ android {
             shrinkResources false
             multiDexEnabled true
             resValue "string", "INFURA_KEY", INFURA_KEY
+            resValue "string", "INFURA_ENDPOINT", INFURA_ENDPOINT
+            resValue "string", "AAVE_ADDRESS", AAVE_ADDRESS
             resValue "string", "DAI_ADDRESS", DAI_ADDRESS
+            resValue "string", "AAVE_ENDPOINT", AAVE_ENDPOINT
             resValue "string", "ENS_ADDRESS", ENS_ADDRESS
             resValue "string", "TGLINK_ENDPOINT", TGLINK_ENDPOINT
             resValue "string", "ENS_ENDPOINT", ENS_ENDPOINT

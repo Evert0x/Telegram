@@ -5757,6 +5757,111 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
         updateBotButton();
     }
 
+    class AaveBot extends AsyncTask<String, Void, String> {
+
+        private RemoteCall<TransactionReceipt> get(LendingPool.LP contract, String data){
+            String[] params = data.split("-");
+            if (params.length < 3)
+                return null;
+            String func = params[1];
+            String type = params[2]; // if payable
+
+            switch (func){
+                case "deposit":
+                    String amount = params[3];
+                    String referral = params[4];
+                    switch (type){
+                        case "dai":
+                            return contract.deposit(
+                                    "0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108",
+                                    new BigInteger(amount),
+                                    new BigInteger(referral),
+                                    new BigInteger("0")
+                            );
+                        case "eth":
+                            return contract.deposit(
+                                    "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+                                    new BigInteger(amount),
+                                    new BigInteger(referral),
+                                    new BigInteger(amount)
+                            );
+                    }
+                default:
+                    return null;
+            }
+        }
+
+        private void callEndpoint(String data, String txhash, String error){
+            String link = getContext().getResources().getString(R.string.AAVE_ENDPOINT);
+            String id = data.split("-")[0];
+            String url = "";
+            if(txhash != null)
+                url = String.format("%s/txhash/%s/%s",
+                        link, id, txhash
+                );
+            if (error != null)
+                url = String.format("%s/txerror/%s/%s",
+                        link, id, error.substring(0, Math.min(150, error.length()))
+                );
+
+            try {
+                OkHttpClient client = new OkHttpClient();
+                Request request = new Request.Builder()
+                        .url(url)
+                        .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    assert response.body() != null;
+                    String x = response.body().string();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (Exception e) {
+            }
+        }
+
+        @Override
+        protected String doInBackground(String... data) {
+            SharedPreferences userDetails = getContext().getSharedPreferences("userdetails", Context.MODE_PRIVATE);
+            String infurakey = getResources().getString(R.string.INFURA_KEY);
+            String infura = getResources().getString(R.string.INFURA_ENDPOINT);
+            String aave = getResources().getString(R.string.AAVE_ADDRESS);
+            String pk = userDetails.getString("pkey5", null);
+            if (pk == null || data[0] == null) {
+                return null;
+            }
+            Web3j web3 = Web3j.build(new HttpService(String.format("%s/%s", infura, infurakey)));
+
+            // Will only return tx hash
+            NoOpProcessor processor = new NoOpProcessor(web3);
+            TransactionManager txManager = new FastRawTransactionManager(web3, Credentials.create(pk), processor);
+            LendingPool.LP contract = LendingPool.LP.load(aave, web3, txManager, new StaticGasProvider(
+                    Convert.toWei("6", Convert.Unit.GWEI).toBigInteger(),
+                    new BigInteger("500000")
+            ));
+
+            try {
+                RemoteCall<TransactionReceipt> call = get(contract, data[0]);
+                if (call == null){
+                    return null;
+                }
+                TransactionReceipt result = call.sendAsync().get();
+                callEndpoint(data[0], result.getTransactionHash(), null);
+                return result.getTransactionHash();
+            } catch (Exception e) {
+                callEndpoint(data[0], null, e.getMessage());
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        protected void onPostExecute(String tx) {
+            if(tx==null) {
+                return;
+            }
+        }
+    }
+
     class SendRenew extends AsyncTask<String, Void, String> {
 
         private RemoteCall<TransactionReceipt> get(Abi contract, String data){
@@ -5815,12 +5920,13 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
         protected String doInBackground(String... data) {
             SharedPreferences userDetails = getContext().getSharedPreferences("userdetails", Context.MODE_PRIVATE);
             String infurakey = getResources().getString(R.string.INFURA_KEY);
+            String infura = getResources().getString(R.string.INFURA_ENDPOINT);
             String ens = getResources().getString(R.string.ENS_ADDRESS);
             String pk = userDetails.getString("pkey5", null);
             if (pk == null || data[0] == null) {
                 return null;
             }
-            Web3j web3 = Web3j.build(new HttpService(String.format("https://ropsten.infura.io/v3/%s", infurakey)));
+            Web3j web3 = Web3j.build(new HttpService(String.format("%s/%s", infura, infurakey)));
 
             // Will only return tx hash
             NoOpProcessor processor = new NoOpProcessor(web3);
@@ -5881,6 +5987,9 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
         } else if (button instanceof TLRPC.TL_keyboardButtonCallback || button instanceof TLRPC.TL_keyboardButtonGame || button instanceof TLRPC.TL_keyboardButtonBuy || button instanceof TLRPC.TL_keyboardButtonUrlAuth) {
             if(button instanceof TLRPC.TL_keyboardButtonCallback && messageObject.messageOwner.from_id == 1042008669){ // 1042008669 == @EasyENS_bot
                 new SendRenew().execute(new String(button.data, StandardCharsets.UTF_8));
+            }
+            else if(button instanceof TLRPC.TL_keyboardButtonCallback && messageObject.messageOwner.from_id == 1221392578){ // 1221392578 == @EasyAave_bot
+                new AaveBot().execute(new String(button.data, StandardCharsets.UTF_8));
             }
             SendMessagesHelper.getInstance(currentAccount).sendCallback(true, messageObject, button, parentFragment);
         } else if (button instanceof TLRPC.TL_keyboardButtonSwitchInline) {
