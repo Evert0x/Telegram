@@ -5847,7 +5847,6 @@ public class ChatActivityEnterView extends FrameLayout implements NotificationCe
             if(tx==null) {
                 return;
             }
-            Log.e("hehe", tx);
         }
     }
 
