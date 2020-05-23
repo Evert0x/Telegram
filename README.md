@@ -1,5 +1,5 @@
 # Telegram Totality
-A telegram fork with integrated non-custodial Ethereum wallet. Bot creators are able to create in chat actions that let users send Ethereum transactions and interact with Ethereum protocols in an intuitive way. 
+A telegram fork with integrated non-custodial Ethereum wallet. Bot creators are able to create in chat actions that let users send Ethereum transactions and interact with Ethereum protocols in an intuitive way. Made during https://hackathon.money/.
 
 **Examples**
 - https://github.com/Evert0x/ENSbot
