@@ -20,6 +20,9 @@ AAVE_ENDPOINT={AAVE_SERVER_URL}
 
 For TGLINK, take a look at https://github.com/Evert0x/KeyValue, this is a centralized placeholder to map Telegram userid's to their Ethereum address. Will be on chain in the future.
 
+### Notes
+Currently the ENS and AAVE use cases are hardcoded, this is to showcase the hack. In the future this will be more generalised with proxy endpoints / contracts.
+
 # Original read me
 
 ## Telegram messenger for Android
