@@ -1,3 +1,30 @@
+# Telegram Totality
+A telegram fork with integrated non-custodial Ethereum wallet. Bot creators are able to create in chat actions that let users send Ethereum transactions and interact with Ethereum protocols in an intuitive way. Made during https://hackathon.money/.
+
+**Examples**
+- https://github.com/Evert0x/ENSbot
+- https://github.com/Evert0x/AaveBot
+
+## Build info
+1. Follow the original readme below
+2. Add the following info to `gradle.properties`
+
+>INFURA_ENDPOINT=https://ropsten.infura.io/v3  
+INFURA_KEY={INFURA_KEY}</br>
+DAI_ADDRESS=0xf80A32A835F79D7787E8a8ee5721D0fEaFd78108  
+ENS_ADDRESS=0x283Af0B28c62C092C9727F1Ee09c02CA627EB7F5  
+AAVE_ADDRESS=0x9E5C7835E4b13368fd628196C4f1c6cEc89673Fa  
+TGLINK_ENDPOINT={TGLINK}</br>
+ENS_ENDPOINT={ENS_SERVER_URL}</br>
+AAVE_ENDPOINT={AAVE_SERVER_URL}
+
+For TGLINK, take a look at https://github.com/Evert0x/KeyValue, this is a centralized placeholder to map Telegram userid's to their Ethereum address. Will be on chain in the future.
+
+### Notes
+Currently the ENS and AAVE use cases are hardcoded, this is to showcase the hack. In the future this will be more generalised with proxy endpoints / contracts.
+
+# Original read me
+
 ## Telegram messenger for Android
 
 [Telegram](https://telegram.org) is a messaging app with a focus on speed and security. It’s superfast, simple and free.
