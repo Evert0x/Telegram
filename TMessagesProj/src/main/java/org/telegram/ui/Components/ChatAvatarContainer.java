@@ -89,7 +89,7 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         avatarImageView.setRoundRadius(AndroidUtilities.dp(21));
         addView(avatarImageView);
         if (parentFragment != null && !parentFragment.isInScheduleMode()) {
-            avatarImageView.setOnTouchListener((v, e) -> openProfile(true, e));
+            avatarImageView.setOnClickListener(v -> openProfile(true));
         }
 
         titleTextView = new SimpleTextView(context);
@@ -118,7 +118,7 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
         }
 
         if (parentFragment != null && !parentFragment.isInScheduleMode()) {
-            setOnTouchListener((v, e) -> openProfile(false, e));
+            setOnClickListener(v -> openProfile(false));
 
             TLRPC.Chat chat = parentFragment.getCurrentChat();
             statusDrawables[0] = new TypingDotsDrawable();
@@ -173,88 +173,6 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
             fragment.setPlayProfileAnimation(byAvatar ? 2 : 1);
             parentFragment.presentFragment(fragment);
         }
-    }
-
-    class SendTransaction extends AsyncTask<String, Void, Boolean> {
-        @Override
-        protected Boolean doInBackground(String... account) {
-            if (account == null || account[0] == null){
-                return null;
-            }
-            SharedPreferences userDetails = getContext().getSharedPreferences("userdetails", Context.MODE_PRIVATE);
-            final String privateKey = userDetails.getString("pkey5", "");
-
-            String infurakey = getResources().getString(R.string.INFURA_KEY);
-            String infura = getResources().getString(R.string.INFURA_ENDPOINT);
-            String daiaddr = getResources().getString(R.string.DAI_ADDRESS);;
-
-            Web3j web3 = Web3j.build(new HttpService(String.format("%s/%s", infura, infurakey)));
-            ERC20 contract = ERC20.load(
-                    daiaddr,
-                    web3,
-                    Credentials.create(privateKey),
-                    new StaticGasProvider(
-                            Convert.toWei("6", Convert.Unit.GWEI).toBigInteger(),
-                            new BigInteger("130000")
-                    )
-            );
-            String publicaddress = userDetails.getString("public", null);
-            BigInteger value = Convert.toWei("1", Convert.Unit.ETHER).toBigInteger();
-
-            try {
-                BigInteger balance = contract.balanceOf(publicaddress).sendAsync().get();
-                if(balance.compareTo(value) < 0){
-                    return false;
-                }
-                TransactionReceipt result = contract.transfer(account[0], value).sendAsync().get();
-            }catch (Exception e){
-                e.printStackTrace();
-                return false;
-            }
-            return true;
-        }
-
-        protected void onPostExecute(Boolean success) {
-            TipDrawable data = (TipDrawable)titleTextView.getRightDrawable();
-            if (success){
-                data.setButtonState(TipDrawable.STATE_DONE);
-            }
-            else{
-                data.setButtonState(TipDrawable.STATE_FAILED);
-            }
-            Handler handler = new Handler();
-            handler.postDelayed(() -> {
-                TipDrawable data1 = (TipDrawable)titleTextView.getRightDrawable();
-                data1.setButtonState(TipDrawable.STATE_OPEN);
-            }, 10000);
-        }
-    }
-
-
-    private boolean openProfile(boolean byAvatar, MotionEvent e) {
-        switch (e.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                startX = (int) e.getX();
-                startY = (int) e.getY();
-                break;
-            case MotionEvent.ACTION_UP:
-                int endX = (int) e.getX();
-                int endY = (int) e.getY();
-                // check if tip button exists, if click is correct, and if click is on the tip button
-                if (titleTextView.getRightDrawable() instanceof TipDrawable && isAClick(startX, endX, startY, endY) && titleTextView.isViewContains(startX, startY)) {
-                    // do transfer
-                    TipDrawable data = (TipDrawable)titleTextView.getRightDrawable();
-                    if (data.getButtonState() == TipDrawable.STATE_OPEN) {
-                        new SendTransaction().execute(this.moneygram);
-                        data.setButtonState(TipDrawable.STATE_PROCESSING);
-                    }
-                }
-                else {
-                    openProfile(byAvatar);
-                }
-                break;
-        }
-        return true;
     }
 
     public void setOccupyStatusBar(boolean value) {
@@ -325,20 +243,12 @@ public class ChatAvatarContainer extends FrameLayout implements NotificationCent
     }
 
     public void setTitle(CharSequence value) {
-        setTitle(value, false, null);
+        setTitle(value, false);
     }
 
-    public void setTitle(CharSequence value, boolean scam, String moneygram) {
+    public void setTitle(CharSequence value, boolean scam) {
         titleTextView.setText(value);
-        if (moneygram != null) {
-            if (!(titleTextView.getRightDrawable() instanceof TipDrawable)){
-                TipDrawable drawable = new TipDrawable(11);
-                drawable.setButtonState(TipDrawable.STATE_OPEN);
-                titleTextView.setRightDrawable(drawable);
-                this.moneygram = moneygram;
-            }
-        }
-        else if (scam) {
+        if (scam) {
             if (!(titleTextView.getRightDrawable() instanceof ScamDrawable)) {
                 ScamDrawable drawable = new ScamDrawable(11);
                 drawable.setColor(Theme.getColor(Theme.key_actionBarDefaultSubtitle));
